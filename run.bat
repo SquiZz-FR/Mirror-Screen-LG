@@ -24,7 +24,7 @@ if errorlevel 1 (
 echo [INFO] Environnement virtuel activé.
 echo.
 
-:: Afficher l'aide si aucun argument n'est fourni
+:: Si aucun argument n'est fourni, afficher l'aide
 if "%~1"=="" (
     python src/main.py --help
     goto END
@@ -34,7 +34,5 @@ if "%~1"=="" (
 python src/main.py %*
 
 :END
-:: Désactiver l'environnement virtuel
+:: Désactiver l'environnement virtuel à la fin
 call .\venv\Scripts\deactivate
-
-@echo on
