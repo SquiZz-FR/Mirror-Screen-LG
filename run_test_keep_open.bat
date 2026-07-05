@@ -1,6 +1,6 @@
 @echo off
-:: Mirror Screen LG - Test Run Script
-:: Ce script lance l'application en mode test (sans connexion TV)
+:: Mirror Screen LG - Test Run Script (Keep Window Open)
+:: Ce script lance l'application en mode test et garde la fenêtre ouverte.
 ::
 :: Usage: Double-cliquez sur ce fichier pour tester le projet.
 
@@ -31,9 +31,5 @@ echo.
 :: Lancer en mode test avec debug activé
 python src/main.py --test --debug
 
-:: Désactiver l'environnement virtuel à la fin
-call .\venv\Scripts\deactivate
-
-echo.
-echo Appuyez sur une touche pour fermer cette fenêtre...
-pause
+:: Ne pas désactiver l'environnement pour garder la fenêtre ouverte
+:: (l'utilisateur peut taper 'deactivate' manuellement s'il le souhaite)

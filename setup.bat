@@ -30,7 +30,6 @@ if %major% NEQ 3 (
     exit /b 1
 )
 
-:: Vérifier que la version mineure est >= 8
 if %minor% LSS 8 (
     echo [ERREUR] Python %pyversion% détecté. Ce projet nécessite Python 3.8 ou supérieur.
     pause
@@ -114,4 +113,5 @@ echo Exemples :
 echo  - Mode test : python src/main.py --test
   - Avec TV : python src/main.py --tv-ip 192.168.0.32 --passphrase ABC123
 echo.
+echo Appuyez sur une touche pour fermer cette fenêtre...
 pause

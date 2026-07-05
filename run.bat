@@ -36,3 +36,7 @@ python src/main.py %*
 :END
 :: Désactiver l'environnement virtuel à la fin
 call .\venv\Scripts\deactivate
+
+echo.
+echo Appuyez sur une touche pour fermer cette fenêtre...
+pause
