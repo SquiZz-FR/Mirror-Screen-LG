@@ -14,15 +14,30 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Vérifier la version de Python
+:: Récupérer la version complète de Python (ex: 3.14.0)
 for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do set "pyversion=%%v"
-if "%pyversion%" LSS "3.8" (
+
+:: Extraire la version majeure et mineure (ex: 3.14 -> major=3, minor=14)
+for /f "tokens=1,2 delims=. " %%a in ('echo %pyversion%') do (
+    set major=%%a
+    set minor=%%b
+)
+
+:: Vérifier que la version majeure est 3 et la version mineure >= 8
+if %major% NEQ 3 (
+    echo [ERREUR] Python %pyversion% détecté. Ce projet nécessite Python 3.x (3.8+).
+    pause
+    exit /b 1
+)
+
+:: Vérifier que la version mineure est >= 8
+if %minor% LSS 8 (
     echo [ERREUR] Python %pyversion% détecté. Ce projet nécessite Python 3.8 ou supérieur.
     pause
     exit /b 1
 )
 
-echo [INFO] Python %pyversion% détecté.
+echo [INFO] Python %pyversion% détecté (compatible).
 
 :: Créer l'environnement virtuel
 if not exist venv (
