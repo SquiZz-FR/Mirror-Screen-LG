@@ -9,7 +9,15 @@ It initializes the screen capture and streaming server to mirror the PC screen t
 import argparse
 import logging
 import sys
+import os
+from pathlib import Path
 from typing import Optional
+
+# Add the project root to Python path to allow imports from src/
+# This allows running the script from any directory
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 # Configure logging
 logging.basicConfig(
@@ -103,6 +111,7 @@ def validate_args(args) -> bool:
 
 def run_screen_mirroring(args):
     """Run the screen mirroring application."""
+    # Import here to ensure project root is in sys.path
     from src.screen_capture.capture import ScreenCapture
     from src.network.stream_server import StreamServer
     from src.network.device_connector import DeviceConnector
