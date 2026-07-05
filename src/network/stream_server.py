@@ -10,6 +10,7 @@ import logging
 import websockets
 from typing import Optional, Set
 import json
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,8 @@ class StreamServer:
         self.connected_clients: Set = set()
         self.device_connector = None
         self._running = False
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._server_thread: Optional[threading.Thread] = None
         logger.info(f"StreamServer initialized (Host: {host}, Port: {port})")
     
     def set_device_connector(self, connector):
@@ -132,10 +135,11 @@ class StreamServer:
             return
         
         # Run in the event loop thread
-        asyncio.run_coroutine_threadsafe(
-            self._broadcast_frame(frame_data),
-            self._loop
-        )
+        if self._loop and self._loop.is_running():
+            asyncio.run_coroutine_threadsafe(
+                self._broadcast_frame(frame_data),
+                self._loop
+            )
     
     def start(self):
         """Start the WebSocket server in a background thread."""
@@ -147,21 +151,27 @@ class StreamServer:
         
         # Create new event loop for the server
         self._loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self._loop)
         
         # Start server in background thread
-        import threading
         self._server_thread = threading.Thread(
             target=self._run_server,
             daemon=True
         )
         self._server_thread.start()
         
+        # Give the server a moment to start
+        import time
+        time.sleep(0.5)
+        
         logger.info(f"WebSocket server started on ws://{self.host}:{self.port}")
     
     def _run_server(self):
         """Run the WebSocket server in the event loop."""
         try:
+            # Set the event loop for this thread
+            asyncio.set_event_loop(self._loop)
+            
+            # Create the server
             self.server = websockets.serve(
                 self._handle_client,
                 self.host,
@@ -169,12 +179,15 @@ class StreamServer:
                 ping_interval=20,
                 ping_timeout=60
             )
+            
+            # Run the server in the event loop
             self._loop.run_until_complete(self.server)
             self._loop.run_forever()
         except Exception as e:
             logger.error(f"WebSocket server error: {e}", exc_info=True)
         finally:
             self._loop.close()
+            self._running = False
     
     def stop(self):
         """Stop the WebSocket server."""
@@ -188,7 +201,8 @@ class StreamServer:
             # Close all client connections
             for websocket in self.connected_clients:
                 try:
-                    self._loop.run_until_complete(websocket.close())
+                    if self._loop and self._loop.is_running():
+                        asyncio.run_coroutine_threadsafe(websocket.close(), self._loop)
                 except:
                     pass
             
@@ -197,10 +211,12 @@ class StreamServer:
             # Stop the server
             if self.server:
                 self.server.ws_server.close()
-                self._loop.call_soon_threadsafe(self._loop.stop)
+                # Signal the loop to stop
+                if self._loop:
+                    self._loop.call_soon_threadsafe(self._loop.stop)
             
             # Wait for thread to finish
-            if hasattr(self, '_server_thread'):
+            if self._server_thread:
                 self._server_thread.join(timeout=2)
                 
         except Exception as e:
